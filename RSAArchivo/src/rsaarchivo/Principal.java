@@ -4,7 +4,15 @@
  * and open the template in the editor.
  */
 package rsaarchivo;
-
+import java.io.*;
+import java.security.*;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.KeySpec;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.crypto.*;
 /**
  *
  * @author bartt
@@ -12,6 +20,7 @@ package rsaarchivo;
 public class Principal extends javax.swing.JFrame {
     
     cifrado  cifrar = new cifrado ();
+    String code = "";
 
     /**
      * Creates new form Principal
@@ -34,7 +43,8 @@ public class Principal extends javax.swing.JFrame {
         jLabel3 = new javax.swing.JLabel();
         ELTESTO = new javax.swing.JTextField();
         ENCRIPTO = new javax.swing.JButton();
-        RESULTADO = new javax.swing.JLabel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        Cif = new javax.swing.JTextArea();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -57,6 +67,11 @@ public class Principal extends javax.swing.JFrame {
             }
         });
 
+        Cif.setEditable(false);
+        Cif.setColumns(20);
+        Cif.setRows(5);
+        jScrollPane1.setViewportView(Cif);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -64,22 +79,21 @@ public class Principal extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
+                        .addGap(314, 314, 314)
+                        .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 170, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(jLabel2)
+                        .addGap(44, 44, 44)
+                        .addComponent(ELTESTO, javax.swing.GroupLayout.PREFERRED_SIZE, 440, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(ENCRIPTO))
+                    .addGroup(layout.createSequentialGroup()
                         .addContainerGap()
                         .addComponent(jLabel3)
-                        .addGap(42, 42, 42)
-                        .addComponent(RESULTADO, javax.swing.GroupLayout.PREFERRED_SIZE, 568, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(314, 314, 314)
-                        .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 170, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jLabel2)
-                .addGap(44, 44, 44)
-                .addComponent(ELTESTO, javax.swing.GroupLayout.PREFERRED_SIZE, 440, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 23, Short.MAX_VALUE)
-                .addComponent(ENCRIPTO)
-                .addGap(25, 25, 25))
+                        .addGap(18, 18, 18)
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 602, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(21, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -91,22 +105,96 @@ public class Principal extends javax.swing.JFrame {
                     .addComponent(jLabel2)
                     .addComponent(ELTESTO, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(ENCRIPTO))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 234, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel3)
-                    .addComponent(RESULTADO, javax.swing.GroupLayout.PREFERRED_SIZE, 113, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap())
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(28, 28, 28)
+                        .addComponent(jLabel3))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(18, 18, 18)
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(34, Short.MAX_VALUE))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
     private void ENCRIPTOActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ENCRIPTOActionPerformed
-        // TODO add your handling code here:
+        code = ELTESTO.getText();
+        
+        try {
+            Cif.setText(cifradoRSA(code));
+            // TODO add your handling code here:
+        } catch (Exception ex) {
+            Logger.getLogger(Principal.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }//GEN-LAST:event_ENCRIPTOActionPerformed
-
+    
+    public String cifradoRSA(String texto) throws Exception{
+        // TODO code application logic here
+        String Cifrado = "";
+        //iniciamos con la generacion de las llaves
+        KeyPairGenerator keypairgenerator = KeyPairGenerator.getInstance("RSA");
+        
+        //generacion de llaves a partir de la clase
+        
+        KeyPair llaves = keypairgenerator.generateKeyPair();
+        //System.out.println("uwu");
+        //llave publica
+        PublicKey llavepublica = llaves.getPublic();
+        
+        
+        //llave privada
+        PrivateKey llaveprivada = llaves.getPrivate();
+        
+        //vamos a crear un metodo que se encargue de guardar en un fichero dicha llave
+        
+        guardarLlave(llavepublica, "publickey.key");
+        
+        //cargar la llave de un fichero
+        
+        llavepublica = cargarLlave("publickey.key");
+        
+        guardarLlave(llaveprivada, "privatekey.key");
+        
+        llaveprivada = cargarLLave("privatekey.key");
+        
+        
+        //obtener la clase del cifrado
+        rsa = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+        //cifrado rsa que es asimetrico, por bloques y con relleno
+        
+        //cifrar
+        rsa.init(Cipher.ENCRYPT_MODE, llavepublica);
+        
+        //nuestro arreglo de byte
+        byte[] encriptado = rsa.doFinal(texto.getBytes());
+        
+        
+        //vamos a escribir en el cifrado y ver los caracteres visibles
+        
+        for(byte b : encriptado){
+            System.out.print("Cifrado: "+ Integer.toHexString(0xFF & b));
+            
+            Cifrado += Integer.toHexString(0xFF & b);
+            
+        }
+        System.out.println();
+        
+        
+        //descifrado
+        rsa.init(Cipher.DECRYPT_MODE, llaveprivada);
+        
+        byte[] descencriptar = rsa.doFinal(encriptado);
+        
+        String textoDecifrado = new String(descencriptar);
+        
+        System.out.println("Descifrado: "+ textoDecifrado);
+        
+        return Cifrado;
+    }
+    
     private void ELTESTOActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ELTESTOActionPerformed
-        String texto = String.
+        
     }//GEN-LAST:event_ELTESTOActionPerformed
 
     /**
@@ -143,14 +231,75 @@ public class Principal extends javax.swing.JFrame {
             }
         });
     }
+    private static Cipher rsa;
+
+    /**
+     * @param args the command line arguments
+     */
+    
+    
+    private static void guardarLlave(Key llave, String archivo) throws FileNotFoundException, IOException {
+        byte[] llaves = llave.getEncoded(); //recibo una llave publica o privada
+        
+        //generar la salida de un archivo para guardar esa llave publica o privada
+        FileOutputStream fos = new FileOutputStream(archivo);
+        //escribe la llave publica o privada
+        fos.write(llaves);
+        fos.close();
+    }
+
+
+    private static PublicKey cargarLlave(String archivo) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
+        //vamos a generar el archivo que se cargar
+        FileInputStream fis = new FileInputStream(archivo);
+        int numBytes = fis.available();
+        byte[] bytes = new byte[numBytes];
+        fis.read(bytes);
+        fis.close();
+        
+        //ahora falta el tratamiento a la llave publica
+        KeyFactory keyfactor = KeyFactory.getInstance("RSA");
+        //vamos a darle un formato de salida a la llave publica para que se pueda visualizar 
+        //para ello necesitamos ocupar el certificado x509 de codificacion de llaves
+        KeySpec keyspec = new X509EncodedKeySpec(bytes);
+        //ya que tiene formato
+        //vamos a necesitar a la clase para poder importar el elemento
+        PublicKey llaveparaBytes = keyfactor.generatePublic(keyspec);
+        //retorno mi variable
+        return llaveparaBytes;
+        
+    }
+
+
+    private static PrivateKey cargarLLave(String archivo) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
+        //vamos a generar el archivo que se cargar
+        FileInputStream fis = new FileInputStream(archivo);
+        int numBytes = fis.available();
+        byte[] bytes = new byte[numBytes];
+        fis.read(bytes);
+        fis.close();
+        
+        //para una llave privada se necesita el certificado que viene por parte
+        //de PKCS8 para certificarlas
+         KeyFactory keyfactor = KeyFactory.getInstance("RSA");
+         
+         KeySpec keyspec = new PKCS8EncodedKeySpec(bytes);
+         
+         PrivateKey llaveparaBytes = keyfactor.generatePrivate(keyspec);
+         
+         return llaveparaBytes;
+        
+        
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JTextArea Cif;
     private javax.swing.JTextField ELTESTO;
     private javax.swing.JButton ENCRIPTO;
-    private javax.swing.JLabel RESULTADO;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JScrollPane jScrollPane1;
     // End of variables declaration//GEN-END:variables
 
     private static class cifrado {
